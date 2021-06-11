@@ -1,0 +1,12 @@
+{
+    "name": "EuroAreaStatistics/wordpress-api",
+    "description": "API to access WordPress from web site",
+    "require": {
+        "php": ">=7.4",
+        "guzzlehttp/guzzle": "^6.3",
+        "nette/caching": "^2.5"
+    },
+    "autoload": {
+        "psr-4": {"\\EuroAreaStatistics\\WordPressApi\\": "src/"}
+    }
+}
