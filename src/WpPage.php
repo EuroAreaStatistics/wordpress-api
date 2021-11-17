@@ -218,6 +218,21 @@ class WpPage {
     return $translations[$this->lang];
   }
 
+  private function buildSlug($slug, $title) {
+    if (substr($slug, 0, 3) === 'en-') {
+      $slug = substr($slug, 3);
+    }
+    if ($slug === '') {
+      $slug = strtolower(strip_tags($title));
+      $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
+      $slug = trim($slug, '-');
+      if ($slug === '') {
+        $slug = 'unnamed';
+      }
+    }
+    return $slug;
+  }
+
   private function getSitemap() {
     $sitemap = [];
 // optional about page
@@ -241,18 +256,7 @@ class WpPage {
       '_fields' => 'slug,translations,title',
     ]);
     foreach ($pages as $page) {
-      $slug = $page['slug'];
-      if (substr($slug, 0, 3) === 'en-') {
-        $slug = substr($slug, 3);
-      }
-      if ($slug === '') {
-        $slug = strtolower(strip_tags($page['title']['rendered']));
-        $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
-        $slug = trim($slug, '-');
-        if ($slug === '') {
-          $slug = 'unnamed';
-        }
-      }
+      $slug = $this->buildSlug($page['slug'], $page['title']['rendered']);
       $sitemap['translation'][$slug] = $page['translations'];
       $sitemap['title'][$slug] = $page['title']['rendered'];
       foreach ($page['translations'] as $id) {
@@ -416,5 +420,39 @@ class WpPage {
   function updateFields($page, $fields) {
     // user needs edit_posts capability and/or filter acf/rest_api/item_permissions/update
     return $this->api->postJson('/wp-json/acf/v3/'.$this->postType.'/'.rawurlencode($page), [], ['fields' => $fields]);
+  }
+
+  function getLatest($lang = 'en') {
+    $json = $this->api->getSingleJsonPage('/wp-json/wp/v2/'.$this->postType, [
+      'lang' => 'en',
+      'status' => implode(',', $this->status),
+      'per_page' => 1,
+      '_embed' => 'wp:featuredmedia',
+      '_fields' => 'slug,translations,acf.highlight,title,excerpt,_links.wp:featuredmedia',
+    ]);
+    $json = $json['json'];
+    if (!count($json)) {
+      return NULL;
+    }
+    $json = $json[0];
+    if (!array_key_exists($lang, $json['translations'])) {
+      $lang = 'en';
+    }
+    $id = $json['translations'][$lang];
+    if ($lang !== 'en') {
+      $json2 = $this->api->getSingleJsonPage('/wp-json/wp/v2/'.$this->postType.'/'.$id, ['_fields' => 'acf.highlight,title,excerpt']);
+      $json = array_replace_recursive($json, $json2['json']);
+    }
+    $slug = $this->buildSlug($json['slug'], $json['title']['rendered']);
+    $result = [
+      'link' => $this->prefix.'/'.$this->route.'/'.$slug.'?lg='.$lang,
+      'title' => $json['title']['rendered'],
+      'excerpt' => $json['excerpt']['rendered'],
+    ];
+    $media = $json['_embedded']['wp:featuredmedia'];
+    if (is_array($media) && count($media)) {
+      $result['thumbnail'] = $this->convertSrc($media[0]['source_url']);
+    }
+    return $result;
   }
 }

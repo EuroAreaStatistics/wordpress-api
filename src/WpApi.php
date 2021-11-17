@@ -50,7 +50,7 @@ class WpApi {
     return $result;
   }
 
-  private function getSingleJsonPage($url, $query) {
+  function getSingleJsonPage($url, $query) {
     $response = $this->client->request('GET', $url, [
       'auth' => [$this->user, $this->key],
       'query' => $query,
