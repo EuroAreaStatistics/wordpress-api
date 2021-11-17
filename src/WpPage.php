@@ -333,6 +333,11 @@ class WpPage {
       $href = $this->convertHref($href);
       $node->setAttribute('href', $href);
     }
+    foreach ($xpath->query('//iframe[@src]') as $node) {
+      $src = $node->getAttribute('src');
+      $src = preg_replace('/([?&]lg=)en(&|$)/', '\1'.$this->lang.'\2', $src);
+      $node->setAttribute('src', $src);
+    }
     foreach ($xpath->query('//img') as $node) {
       $src = $node->getAttribute('src');
       $node->setAttribute('src', $this->convertSrc($src));
