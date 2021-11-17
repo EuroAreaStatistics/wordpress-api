@@ -286,7 +286,11 @@ class WpPage {
   }
 
   private function getTranslatedPage($page) {
-    $html = $this->api->getContent('/index.php', ['page_id' => $page]);
+    if (in_array('draft', $this->status)) {
+      $html = $this->api->getContent('/', ['preview' => 'true', 'post_type' => preg_replace('/-/', '_', $this->postType), 'p' => $page]);
+    } else {
+      $html = $this->api->getContent('/index.php', ['page_id' => $page]);
+    }
     $doc = new DOMDocument;
     $doc->preserveWhiteSpace = TRUE;
     $doc->formatOutput = FALSE;
