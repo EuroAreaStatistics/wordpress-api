@@ -25,7 +25,8 @@ class WpPage {
     $this->status = $config['status'];
     $this->postType = $postType;
     $this->route = $route ?? $postType;
-    $this->api = new WpApi($this->wpUrl, $config['api']['user'], $config['api']['password'], in_array('draft', $this->status));
+    $key = $config['api']['key'] ?? $config['api']['password'];
+    $this->api = new WpApi($this->wpUrl, $config['api']['user'], [$config['api']['password'], $key], in_array('draft', $this->status));
     if (isset($config['cache']['directory'])) {
       if (!file_exists($config['cache']['directory'].'/')) {
         mkdir($config['cache']['directory'], 0777, true);

@@ -7,6 +7,7 @@ class WpApi {
   protected $client;
   private $user;
   private $password;
+  private $key;
   private $cookies;
   private $useLogin;
 
@@ -16,7 +17,13 @@ class WpApi {
       'base_uri' => $baseUrl,
     ]);
     $this->user = $user;
-    $this->password = $password;
+    if (is_array($password)) {
+      $this->password = $password[0];
+      $this->key = $password[1];
+    } else {
+      $this->password = $password;
+      $this->key = $password;
+    }
     $this->useLogin = $useLogin;
   }
 
@@ -45,7 +52,7 @@ class WpApi {
 
   private function getSingleJsonPage($url, $query) {
     $response = $this->client->request('GET', $url, [
-      'auth' => [$this->user, $this->password],
+      'auth' => [$this->user, $this->key],
       'query' => $query,
       'headers' => ['Accept' => 'application/json'],
     ]);
@@ -57,7 +64,7 @@ class WpApi {
 
   function postJson($url, $query = [], $body = null) {
     $response = $this->client->request('POST', $url, [
-      'auth' => [$this->user, $this->password],
+      'auth' => [$this->user, $this->key],
       'query' => $query,
       'body' => json_encode($body, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),
       'headers' => [
